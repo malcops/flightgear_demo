@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<output name="255.255.255.255" type="SOCKET" protocol="UDP" port="1138" rate="2">
+  <rates>
+    <property type="none"> rates/p-rad_sec </property>
+    <property type="none"> rates/q-rad_sec </property>
+  </rates>
+</output>
