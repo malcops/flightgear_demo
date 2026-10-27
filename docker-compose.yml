@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 1. The Core Simulation (Headless computation)
+  jsbsim-core:
+    image: python:3.10-slim
+    volumes:
+      - ./simulation_workspace:/workspace
+    working_dir: /workspace
+    # Install dependencies and then run the JSBSim script
+    command: >
+      bash -c "
+      apt-get update && apt-get install -y git cmake g++ &&
+      pip install jsbsim &&
+      ls -lrt /workspace && 
+      python -c \"import jsbsim; sim = jsbsim.FGFDMExec('/workspace'); sim.load_script('scripts/c172_elevation_test.xml')\"
+      "
+    depends_on:
+      - flightgear-visualizer
+
+  # 2. The 3D Rendering Pipeline
+  flightgear-visualizer:
+    image: flightgear-docker-image # Ensure you built this from Method 1
+    volumes:
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro
+    # 2. Tell the internal Qt/FlightGear framework to use Wayland
+    environment:
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - QT_QPA_PLATFORM=wayland
+      - XDG_RUNTIME_DIR=/tmp
+    # 3. Mount your host's GPU graphics card nodes
+    devices:
+      - /dev/dri:/dev/dri
+    network_mode: "host" 
+    # Tells FG to bypass internal physics and listen for incoming UDP packets
+    command: >
+      --fdm=null 
+      --native-fdm=socket,in,60,,5550,udp 
+      --aircraft=c172p 
+      --airport=KSFO
+
